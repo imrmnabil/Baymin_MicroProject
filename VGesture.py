@@ -1,59 +1,46 @@
-import cv2
 import mediapipe as mp
+import cv2
+import time
 
-mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5)
+image_path = "data/CurrentImg.png"
 
-# Initialize VideoCapture object
-cap = cv2.VideoCapture(0)
+i = 0
 
-with mp_hands.Hands(
-    max_num_hands=1,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5) as hands:
-    while cap.isOpened():
-        # Read image from camera
-        success, image = cap.read()
-        if not success:
-            break
+def is_victory(hand_landmarks):
+    # Check if the hand is making the victory sign (index and middle fingers extended, other fingers curled)
+    index_tip_y = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y
+    middle_tip_y = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y
+    other_fingers_closed = all(lm.y > middle_tip_y for lm in hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP:mp_hands.HandLandmark.MIDDLE_FINGER_TIP])
+    return index_tip_y < middle_tip_y and other_fingers_closed
 
-        # Flip the image horizontally for a later selfie-view display
-        image = cv2.flip(image, 1)
 
-        # Convert the image from BGR color (which OpenCV uses) to RGB color (which Mediapipe uses)
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+while True:
+    try:
+        image = cv2.imread(image_path)
 
-        # Process the image and detect hands
-        results = hands.process(image_rgb)
+        # Convert the BGR image to RGB and process it with Mediapipe
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = hands.process(rgb)
 
-        # Check if hands are detected
+        # Check if the hand is making the victory sign
         if results.multi_hand_landmarks:
-            # Get the landmarks of the first (and only) detected hand
-            hand_landmarks = results.multi_hand_landmarks[0]
+            for hand_landmarks in results.multi_hand_landmarks:
+                if is_victory(hand_landmarks):
+                    i = i + 1
+                    print(i)
+                    if i > 1:
+                        print("Victory!!")
+                        i = 0
+                else:
+                    i = 0
 
-            # Get the x, y, and z-coordinates of the landmarks
-            landmarks = [[int(l.x * image.shape[1]), int(l.y * image.shape[0]), int(l.z * 1000)] for l in hand_landmarks.landmark]
-
-            # Check if index and middle fingers are open, and other fingers are closed
-            if (landmarks[mp_hands.HandLandmark.INDEX_FINGER_TIP][1] < landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP][1] and
-                landmarks[mp_hands.HandLandmark.RING_FINGER_TIP][1] > landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP][1] and
-                landmarks[mp_hands.HandLandmark.PINKY_TIP][1] > landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP][1] and
-                landmarks[mp_hands.HandLandmark.THUMB_TIP][0] < landmarks[mp_hands.HandLandmark.INDEX_FINGER_TIP][0] and
-                landmarks[mp_hands.HandLandmark.THUMB_TIP][0] < landmarks[mp_hands.HandLandmark.MIDDLE_FINGER_TIP][0]):
-                print("Yes")
-
-            # Visualize the hand landmarks
-            mp_drawing.draw_landmarks(
-                image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-
-        # Display the image
-        cv2.imshow('MediaPipe Hands', image)
-
-        # Exit if 'q' is pressed
-        if cv2.waitKey(5) & 0xFF == ord('q'):
+        key = cv2.waitKey(1)
+        if key == 27:
             break
+    except:
+        print("Trying Again!")
+    time.sleep(1)
 
-# Release the VideoCapture object and destroy all windows
-cap.release()
-cv2.destroyAllWindows()
-
+hands.close()
