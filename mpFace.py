@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import time
 import mediapipe as mp
@@ -7,6 +9,7 @@ mp_face_detection = mp.solutions.face_detection
 
 # Load image file
 image_path = "data/CurrentImg.png"
+file_path = "data/isFace.txt"
 
 # Initialize Face Detection model
 with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detection:
@@ -21,11 +24,13 @@ with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detec
             # Perform face detection on the image
             results = face_detection.process(image_rgb)
 
-            # If a face is detected, print "Yes"
-            if results.detections:
-                print("Yes")
-            else:
-                print("No")
+            with open(file_path, "w") as f:
+                if results.detections:
+                    f.write("True")
+                    print("True")
+                else:
+                    f.write("False")
+                    print("False")
         except:
             print("Try Again!")
 
