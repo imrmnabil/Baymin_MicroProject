@@ -35,4 +35,4 @@ with mp_face_detection.FaceDetection(min_detection_confidence=0.5) as face_detec
             print("Try Again!")
 
         # Wait for 1 second before detecting faces in the next frame
-        time.sleep(1)
+        time.sleep(5)

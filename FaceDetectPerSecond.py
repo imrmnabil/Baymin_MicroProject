@@ -18,5 +18,5 @@ while True:
         print("yes")
     else:
         print("No")
-    time.sleep(1)
+    time.sleep(5)
 

@@ -1,10 +1,17 @@
-with open('myfile.txt', 'r') as f:
+import pygame
+import pigpio
+import time as t
+
+pygame.mixer.init()
+pygame.mixer.music.load('break.mp3')
+
+with open('data/time.txt', 'r') as f:
     count = 0
     for line in f:
         line = line.rstrip('\n')
         count += 1
 
-person = open('person.txt', 'r').readlines()[0]
+person = open('data/isFace.txt', 'r').readlines()[0]
 
 if person=="True":
     person = True
@@ -12,20 +19,20 @@ else:
     person=False
 
 if not person:
-    file=open('myfile.txt', 'r')
+    file=open('data/time.txt', 'r')
     lines = file.readlines()
     if lines and lines[0] == "F":
-        file = open('myfile.txt', 'w')
+        file = open('data/time.txt', 'w')
         file.write('F\n')
     elif not lines:
-        file = open('myfile.txt', 'w')
+        file = open('data/time.txt', 'w')
         file.write('F\n')
     elif count == 6:
-        with open('myfile.txt', 'w') as file:
+        with open('data/time.txt', 'w') as file:
             file.write('F\n')
     else:
         print(person)
-        with open('myfile.txt', 'r+') as file:
+        with open('data/time.txt', 'r+') as file:
             file.seek(0, 2)
             file.write('F\n')
             file.seek(0)
@@ -34,7 +41,7 @@ if not person:
             lines[1]=time+1
 
 else:
-    with open('myfile.txt', 'r+') as file:
+    with open('data/time.txt', 'r+') as file:
         lines = file.readlines()
         if lines:
             if lines[0] == "F\n":
@@ -43,10 +50,10 @@ else:
                     file.write("T\n")
                     file.write("1\n")
             else:
-                file=open('myfile.txt', 'w')
+                file=open('data/time.txt', 'w')
                 time = int(lines[1])
                 file.write("T\n")
-                file = open('myfile.txt', 'a')
+                file = open('data/time.txt', 'a')
                 file.write(str(time + 1)+'\n')
                 file.seek(0, 0)
                 # file.writelines(lines)
@@ -56,13 +63,30 @@ else:
 ###############################################################################
 
 if count>=2:
-    file = open('myfile.txt', 'r')
+    file = open('data/time.txt', 'r')
     lines = file.readlines()
     if lines:
         time = int(lines[1])
     if time>29:
-        #eije tor bal ekhane
-        print("Ar bosha jabe na")
+        file=open('data/time.txt', 'w')
+        file.write("T\n")
+        file.write("1\n")
+        print("Here")
+        pi = pigpio.pi()
+        
+        s1 = 14
+        step = 20
+        sleep_time = 0.02
+        for pulse_width in range(1500, 1000, -1*step):
+            pi.set_servo_pulsewidth(s1, pulse_width)
+            t.sleep(sleep_time)
+        pygame.mixer.music.play()
+        t.sleep(4.0)
+        pygame.mixer.music.stop()
+        for pulse_width in range(1000, 1500, step):
+            pi.set_servo_pulsewidth(s1, pulse_width)
+            t.sleep(sleep_time)
+        
     else:
         print("Thakte paris pera nai")
 else:
