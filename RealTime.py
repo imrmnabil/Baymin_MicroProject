@@ -1,6 +1,11 @@
 import mediapipe as mp
 import cv2
 import time
+import pigpio
+import pygame
+
+pygame.mixer.init()
+pygame.mixer.music.load('meerabai.mp3')
 
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5)
@@ -8,6 +13,7 @@ hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_c
 i = 0
 
 start_time = time.time()
+start_time2 = time.time()
 
 # Open the default camera
 cap = cv2.VideoCapture(0)
@@ -37,6 +43,86 @@ def my_function():
             print("No image detected. Please! try again")
     except:
         print("Trying Again")
+        
+def dance():
+    pi = pigpio.pi()  # create a connection to the pigpio daemon
+
+    s1 = 14
+    s2 = 23
+    s3 = 16
+    s4 = 26
+
+    # set the GPIO modes to PWM output
+    pi.set_mode(s1, pigpio.OUTPUT)
+    pi.set_mode(s2, pigpio.OUTPUT)
+    pi.set_mode(s3, pigpio.OUTPUT)
+    pi.set_mode(s4, pigpio.OUTPUT)
+
+    # set the pulse width range suitable for the servos (500-2500 microseconds)
+    pi.set_servo_pulsewidth(s1, 0)
+    pi.set_servo_pulsewidth(s2, 0)
+    pi.set_servo_pulsewidth(s3, 0)
+    pi.set_servo_pulsewidth(s4, 0)
+
+    time.sleep(1)  # wait for the servos to reach the middle position
+    i = 0
+    step = 20
+    sleep_time = 0.02
+    
+    
+    pygame.mixer.music.play()
+    try:
+        while i <3:
+            
+            #smoothly rotate the servos back to the middle position
+            for pulse_width in range(1500, 1000, -1*step):
+                pi.set_servo_pulsewidth(s1, pulse_width)
+                pi.set_servo_pulsewidth(s2, pulse_width)
+                pi.set_servo_pulsewidth(s3, pulse_width)
+                pi.set_servo_pulsewidth(s4, pulse_width)
+                time.sleep(sleep_time)
+        
+            # slowly rotate the servos to one side
+            for pulse_width in range(1000, 1500, step):
+                pi.set_servo_pulsewidth(s1, pulse_width)
+                pi.set_servo_pulsewidth(s2, pulse_width)
+                pi.set_servo_pulsewidth(s3, pulse_width)
+                pi.set_servo_pulsewidth(s4, pulse_width)
+                time.sleep(sleep_time)
+            time.sleep(.3)
+                
+            #smoothly rotate the servos back to the middle position
+            for pulse_width in range(1500, 2000, step):
+                pi.set_servo_pulsewidth(s1, pulse_width)
+                pi.set_servo_pulsewidth(s2, pulse_width)
+                pi.set_servo_pulsewidth(s3, pulse_width)
+                pi.set_servo_pulsewidth(s4, pulse_width)
+                time.sleep(sleep_time)
+        
+            # slowly rotate the servos to one side
+            for pulse_width in range(2000, 1500, -1*step):
+                pi.set_servo_pulsewidth(s1, pulse_width)
+                pi.set_servo_pulsewidth(s2, pulse_width)
+                pi.set_servo_pulsewidth(s3, pulse_width)
+                pi.set_servo_pulsewidth(s4, pulse_width)
+                time.sleep(sleep_time)
+            time.sleep(.3)
+            
+            
+            i = i+1
+    except:
+        print("Sorry")
+        
+    # stop the servos at the middle position
+    pi.set_servo_pulsewidth(s1, 0)
+    pi.set_servo_pulsewidth(s2, 0)
+    pi.set_servo_pulsewidth(s3, 0)
+    pi.set_servo_pulsewidth(s4, 0)
+    
+    pygame.mixer.music.stop()
+
+    # release the pigpio connection
+    pi.stop()
 
 
 def is_victory(hand_landmarks):
@@ -51,7 +137,7 @@ while True:
     success, image = cap.read()
     if not success:
         print("Failed to read frame")
-        break
+        continue
 
     # Flip the image horizontally for a mirror effect
     image = cv2.flip(image, 1)
@@ -66,9 +152,13 @@ while True:
             if is_victory(hand_landmarks):
                 i = i + 1
                 print(i)
-                if i > 8:
+                if i > 5:
                     print("Victory!!")
-                    i = -1000
+                    i = 0
+                    dance()
+    if time.time() - start_time2 >= 2:
+        i = 0
+        start_time2 = time.time()
     elapsed_time = time.time() - start_time
     if elapsed_time >= 5:
         # Call my_function() and reset the start time
