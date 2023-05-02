@@ -40,3 +40,5 @@ For software set up we have used the following technologies:
 * Operating System: Raspberry Pi OS Legacy (Buster)
 * Language Used: Python
 * Library and Tools: OpenCV, Tensorflow Lite, Mediapipe, Crontab, Pigpio, Thonny Python IDE
+
+Project Video Link: [Here](https://www.linkedin.com/posts/tarunnyamoye_desktopbot-cse-activity-7057788687606042625-lJ52) 
